@@ -82,7 +82,6 @@ export default function Home() {
 
   const toggleTicket = (num: number) => {
     if (ticketStatuses[num]) return; 
-    
     if (selectedTickets.includes(num)) {
       setSelectedTickets(prev => prev.filter(t => t !== num));
     } else {
@@ -118,16 +117,13 @@ export default function Home() {
     e.preventDefault();
     if (!activeRaffle) return;
     setIsSubmitting(true);
-
     try {
       await runTransaction(db, async (transaction) => {
         const ticketRefs = selectedTickets.map(n => doc(db, "tickets", `${activeRaffle.id}_${n}`));
         const ticketDocs = await Promise.all(ticketRefs.map(ref => transaction.get(ref)));
-        
         if (ticketDocs.some(d => d.exists())) {
-          throw new Error("Uno de los boletos ya fue apartado por otra persona.");
+          throw new Error("Uno de los boletos ya fue apartado.");
         }
-
         ticketRefs.forEach((ref, i) => {
           transaction.set(ref, {
             number: selectedTickets[i],
@@ -141,20 +137,14 @@ export default function Home() {
           });
         });
       });
-
       toast.success("¡Boletos apartados!");
-      const text = `¡Hola! Aparte boletos para: *${activeRaffle.title}*\n*Números:* ${selectedTickets.join(", ")}\n*Total:* $${selectedTickets.length * activeRaffle.price} MXN\n*Nombre:* ${formData.name}`;
-      window.open(`https://api.whatsapp.com/send?phone=528332583222&text=${encodeURIComponent(text)}`, '_blank');
-      
+      const text = `¡Hola! Aparte boletos para: *${activeRaffle.title}*\n*Números:* ${selectedTickets.join(", ")}\n*Nombre:* ${formData.name}`;
+      window.open(`https://wa.me/528332583222?text=${encodeURIComponent(text)}`, '_blank');
       setSelectedTickets([]);
       setIsModalOpen(false);
       setFormData({ name: "", phone: "", city: "" });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Error al procesar el apartado");
-      }
+    } catch (err: any) {
+      toast.error(err.message || "Error al procesar");
     } finally {
       setIsSubmitting(false);
     }
@@ -162,37 +152,34 @@ export default function Home() {
 
   const downloadTicket = async () => {
     if (!ticketRef.current) return;
-
     try {
       toast.info("Generando pase VIP estelar...");
-
-      const html2canvas = (await import('html2canvas')).default; 
+      const html2canvas = (await import('html2canvas')).default;
       
       const canvas = await html2canvas(ticketRef.current, {
-        scale: 3, 
-        useCORS: true, 
-        backgroundColor: "#050505", // Forzamos fondo sólido
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#050505",
         logging: false,
-        allowTaint: true,
+        imageTimeout: 0,
+        // Forzamos el renderizado sin colores modernos
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById('ticket-capture-area');
+          if (el) el.style.display = 'block';
+        }
       });
 
       const dataUrl = canvas.toDataURL("image/png");
-      
-      const userName = foundTickets[0]?.name?.replace(/\s+/g, "_") || "Cliente";
-      const raffleTitle = activeRaffle?.title?.replace(/\s+/g, "_") || "Sorteo";
-
       const link = document.createElement('a');
-      link.download = `Pase-VIP-${userName}.png`;
+      link.download = `Pase-VIP-${foundTickets[0]?.name || 'Cliente'}.png`;
       link.href = dataUrl;
-      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
-      toast.success("¡Pase VIP descargado con éxito!");
+      toast.success("¡Pase VIP descargado!");
     } catch (error) {
-      console.error("Error al generar el pase:", error);
-      toast.error("Error de compatibilidad. Intenta de nuevo.");
+      console.error("Error:", error);
+      toast.error("Error de compatibilidad. Toma una captura de pantalla.");
     }
   };
 
@@ -206,207 +193,116 @@ export default function Home() {
   const visible = Array.from({ length: end - start }, (_, i) => start + i);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#F5F5F5] font-sans selection:bg-[#8B5CF6]/30 flex flex-col">
+    <div className="min-h-screen bg-[#050505] text-[#F5F5F5] selection:bg-[#8B5CF6]/30 flex flex-col">
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#8B5CF6]/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#3B82F6]/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[rgba(139,92,246,0.1)] blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[rgba(59,130,246,0.1)] blur-[120px] rounded-full" />
       </div>
 
       <main className="relative z-10 flex-grow max-w-6xl mx-auto px-4 pt-16 pb-32 w-full">
-        
         <div className="text-center mb-16">
-          <motion.img 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            src="/logo.png" 
-            alt="Creative Space Logo" 
-            className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full object-cover border-4 border-white/10 shadow-[0_0_50px_rgba(139,92,246,0.3)] mb-6"
-          />
+          <img src="/logo.png" alt="Logo" className="w-32 h-32 mx-auto rounded-full object-cover border-4 border-white/10 shadow-2xl mb-6" />
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-4">CREATIVE<span className="text-[#8B5CF6]">SPACE</span></h1>
-          <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto font-medium">
-            Participa en nuestras dinámicas exclusivas y gana premios increíbles.
-          </p>
+          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">Dinámicas exclusivas con premios increíbles.</p>
         </div>
 
         {!activeRaffle ? (
-          <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-20 text-center backdrop-blur-xl">
+          <div className="bg-white/5 border border-white/10 rounded-[3rem] p-20 text-center">
             <Trophy className="w-16 h-16 text-zinc-800 mx-auto mb-6" />
-            <h2 className="text-2xl font-black mb-2">Próximamente</h2>
-            <p className="text-zinc-500">Estamos preparando una dinámica increíble para ti.</p>
+            <h2 className="text-2xl font-black">Próximamente</h2>
           </div>
         ) : (
           <div className="space-y-10">
-            <section className="relative bg-[#0A0A0A] border border-white/10 rounded-[3rem] p-8 md:p-14 shadow-2xl overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 hidden md:block">
-                 <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl text-center">
-                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Precio</p>
-                    <p className="text-4xl font-black text-white">${activeRaffle.price}<span className="text-sm text-zinc-500 font-bold ml-1">MXN</span></p>
-                 </div>
-              </div>
-
+            <section className="bg-[#0A0A0A] border border-white/10 rounded-[3rem] p-8 md:p-14 shadow-2xl relative overflow-hidden">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 px-3 py-1.5 rounded-full mb-6">
-                  <Sparkles className="w-3.5 h-3.5 text-[#8B5CF6]" />
-                  <span className="text-[10px] font-black text-[#8B5CF6] uppercase tracking-tighter">Sorteo Activo</span>
-                </div>
-                <h2 className="text-4xl md:text-6xl font-black mb-6 leading-[1.1] tracking-tighter">
-                  {activeRaffle.title}
-                </h2>
-                <p className="text-zinc-400 text-lg max-w-lg leading-relaxed mb-6">{activeRaffle.description}</p>
+                <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">{activeRaffle.title}</h2>
+                <p className="text-zinc-400 text-lg mb-6">{activeRaffle.description}</p>
+                <p className="text-3xl font-black text-[#8B5CF6] mb-8">${activeRaffle.price} MXN</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 mb-8 p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-[#111111] border border-white/10"></div>
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Disponible</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-[#8B5CF6]"></div>
-                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Tu Selección</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-[#F59E0B]"></div>
-                    <span className="text-[10px] font-bold text-[#F59E0B] uppercase tracking-widest">Apartado</span>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-red-500"></div>
-                    <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Pagado</span>
-                 </div>
-              </div>
-
-              <div className="mt-8 flex items-center justify-between bg-black/40 border border-white/5 p-2 rounded-2xl backdrop-blur-md">
-                <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} disabled={currentPage === 0} className="p-3 hover:bg-white/5 rounded-xl disabled:opacity-20 transition-all">
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="text-sm font-bold text-zinc-400">
-                  <span className="text-white">{start.toString().padStart(pad, '0')}</span> - <span className="text-white">{(end - 1).toString().padStart(pad, '0')}</span>
-                </div>
-                <button onClick={() => setCurrentPage(p => Math.min(pages - 1, p + 1))} disabled={currentPage === pages - 1} className="p-3 hover:bg-white/5 rounded-xl disabled:opacity-20 transition-all">
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="mt-6 grid grid-cols-5 sm:grid-cols-10 gap-2.5 relative z-10">
+              {/* Grid Boletos */}
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {visible.map((num) => {
                   const status = ticketStatuses[num];
                   const isSelected = selectedTickets.includes(num);
-                  
-                  let btnClass = "";
-                  if (isSelected) {
-                     btnClass = "bg-[#8B5CF6] border-transparent text-white shadow-lg shadow-purple-500/40 z-10 scale-110";
-                  } else if (status === "paid") {
-                     btnClass = "bg-red-500 border-transparent text-white cursor-not-allowed opacity-80";
-                  } else if (status === "reserved") {
-                     btnClass = "bg-[#F59E0B] border-transparent text-black cursor-not-allowed opacity-90";
-                  } else {
-                     btnClass = "bg-[#111111] border-white/5 text-zinc-400 hover:border-[#8B5CF6] hover:text-white";
-                  }
-
                   return (
-                    <motion.button
-                      whileHover={!status ? { scale: 1.05, y: -2 } : {}}
-                      whileTap={!status ? { scale: 0.95 } : {}}
+                    <button
                       key={num}
-                      onClick={() => toggleTicket(num)}
                       disabled={!!status}
-                      className={`h-14 rounded-2xl font-black text-sm transition-all duration-200 border ${btnClass}`}
+                      onClick={() => toggleTicket(num)}
+                      className={`h-12 rounded-xl font-bold text-xs border transition-all ${
+                        isSelected ? "bg-[#8B5CF6] border-transparent text-white" :
+                        status === "paid" ? "bg-red-500 border-transparent text-white" :
+                        status === "reserved" ? "bg-amber-500 border-transparent text-black" :
+                        "bg-zinc-900 border-white/5 text-zinc-500 hover:border-white/20"
+                      }`}
                     >
                       {num.toString().padStart(pad, '0')}
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
+
+              {/* Paginación */}
+              <div className="mt-8 flex justify-center gap-4">
+                <button onClick={() => setCurrentPage(p => Math.max(0, p - 1))} className="p-2 bg-white/5 rounded-lg"><ChevronLeft /></button>
+                <button onClick={() => setCurrentPage(p => Math.min(pages - 1, p + 1))} className="p-2 bg-white/5 rounded-lg"><ChevronRight /></button>
+              </div>
             </section>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="md:col-span-2 bg-[#0A0A0A] border border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-center relative overflow-hidden">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10"><Search className="w-5 h-5 text-zinc-400" /></div>
-                  <h3 className="text-xl font-bold">Mis Boletos</h3>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input type="tel" placeholder="WhatsApp" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} className="flex-1 bg-black/50 border border-white/10 p-4 rounded-2xl text-white focus:border-[#8B5CF6] outline-none" />
-                  <button onClick={handleSearch} disabled={isSearching} className="bg-white text-black px-8 py-4 rounded-2xl font-black hover:bg-zinc-200 flex items-center justify-center gap-2">
-                    {isSearching ? <Loader2 className="animate-spin w-5 h-5" /> : 'Consultar'}
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {foundTickets.length > 0 && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 pt-8 border-t border-white/5">
-                      <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl flex justify-between items-center">
-                        <div>
-                          <p className="text-[10px] text-zinc-500 font-black uppercase mb-1">Nombre</p>
-                          <p className="font-bold">{foundTickets[0].name}</p>
-                          <p className="text-sm text-zinc-400 mt-1">{foundTickets.length} boletos</p>
-                        </div>
-                        <button onClick={downloadTicket} className="bg-[#8B5CF6] p-4 rounded-2xl hover:scale-105 transition-transform">
-                          <DownloadCloud className="w-6 h-6 text-white" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* Buscador */}
+            <div className="bg-[#0A0A0A] border border-white/10 p-8 rounded-[2.5rem]">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Search /> Mis Boletos</h3>
+              <div className="flex gap-2">
+                <input type="tel" placeholder="Tu WhatsApp" value={searchPhone} onChange={(e) => setSearchPhone(e.target.value)} className="flex-1 bg-black border border-white/10 p-4 rounded-xl outline-none" />
+                <button onClick={handleSearch} className="bg-white text-black px-6 rounded-xl font-bold">Consultar</button>
               </div>
-              <div className="bg-gradient-to-br from-[#8B5CF6]/5 to-transparent border border-white/10 p-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center">
-                 <div className="w-16 h-16 bg-[#8B5CF6]/10 rounded-full flex items-center justify-center mb-6"><Info className="text-[#8B5CF6] w-8 h-8" /></div>
-                 <h4 className="text-lg font-bold mb-2">Ayuda</h4>
-                 <p className="text-zinc-500 text-sm">¿Dudas con tu pago? Contáctanos para validar tus boletos.</p>
-              </div>
+              {foundTickets.length > 0 && (
+                <div className="mt-6 p-6 bg-white/5 rounded-2xl flex justify-between items-center border border-white/10">
+                  <div>
+                    <p className="font-bold text-lg">{foundTickets[0].name}</p>
+                    <p className="text-zinc-500">{foundTickets.length} boletos encontrados</p>
+                  </div>
+                  <button onClick={downloadTicket} className="bg-[#8B5CF6] p-4 rounded-xl"><DownloadCloud /></button>
+                </div>
+              )}
             </div>
           </div>
         )}
       </main>
 
-      <footer className="relative z-10 border-t border-white/5 bg-[#050505] mt-auto">
-        <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row justify-between items-center gap-8">
-          <h2 className="text-xl font-black tracking-tighter text-white">CREATIVE<span className="text-[#8B5CF6]">SPACE</span></h2>
-          <div className="flex items-center gap-4">
-            <a href="https://www.facebook.com/people/Creative-Space/61560473976903/" target="_blank" className="w-11 h-11 bg-white/5 border border-white/5 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white transition-all">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-            </a>
-            <a href="https://www.instagram.com/creative_space.mx" target="_blank" className="w-11 h-11 bg-white/5 border border-white/5 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white transition-all">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-            </a>
-            <a href="https://wa.me/528332583222" target="_blank" className="w-11 h-11 bg-white/5 border border-white/5 flex items-center justify-center rounded-xl text-zinc-400 hover:text-white transition-all">
-              <MessageCircle className="w-5 h-5" />
-            </a>
-          </div>
-          <div className="text-center md:text-right">
-             <p className="text-sm font-bold text-white">CREATIVE SPACE</p>
-             <p className="text-xs font-bold text-zinc-500">x Digital Solutions</p>
-          </div>
+      {/* Footer */}
+      <footer className="p-10 border-t border-white/5 text-center">
+        <p className="font-black text-white">CREATIVE<span className="text-[#8B5CF6]">SPACE</span></p>
+        <div className="flex justify-center gap-4 mt-4">
+            <a href="https://wa.me/528332583222" className="p-3 bg-white/5 rounded-xl"><MessageCircle /></a>
         </div>
       </footer>
 
+      {/* Checkout Bar */}
       <AnimatePresence>
         {selectedTickets.length > 0 && !isModalOpen && (
-          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 100, opacity: 0 }} className="fixed bottom-8 left-4 right-4 z-50 flex justify-center">
-            <div className="bg-white/10 backdrop-blur-2xl border border-white/20 p-4 pl-8 rounded-full shadow-2xl flex items-center gap-8">
-              <div>
-                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Resumen</p>
-                <p className="text-2xl font-black">${selectedTickets.length * (activeRaffle?.price || 0)} <span className="text-xs text-[#8B5CF6] font-bold">MXN</span></p>
-              </div>
-              <button onClick={() => setIsModalOpen(true)} className="bg-white text-black px-10 py-4 rounded-full font-black flex items-center gap-2 hover:scale-105 transition-all">
-                Apartar <ArrowRight className="w-5 h-5" />
-              </button>
+          <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }} className="fixed bottom-8 inset-x-4 z-50 flex justify-center">
+            <div className="bg-zinc-900 border border-white/20 p-4 rounded-full flex items-center gap-6 shadow-2xl">
+              <p className="pl-4 font-bold text-xl">${selectedTickets.length * (activeRaffle?.price || 0)} MXN</p>
+              <button onClick={() => setIsModalOpen(true)} className="bg-white text-black px-8 py-3 rounded-full font-black">Apartar Ahora</button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/10 p-8 md:p-12 rounded-[3rem] w-full max-w-md relative shadow-2xl">
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-zinc-500 hover:text-white"><X /></button>
-              <h3 className="text-3xl font-black mb-2">Tus Datos</h3>
-              <form onSubmit={handleCheckout} className="space-y-4 mt-6">
-                <input required placeholder="Nombre Completo" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-[#8B5CF6]" />
-                <input required type="tel" placeholder="WhatsApp (10 dígitos)" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-[#8B5CF6]" />
-                <input required placeholder="Ciudad" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-[#8B5CF6]" />
-                <button type="submit" disabled={isSubmitting} className="w-full bg-[#25D366] py-5 rounded-2xl font-black text-white hover:bg-[#1EBE5C] transition-all flex items-center justify-center gap-2">
-                  {isSubmitting ? <Loader2 className="animate-spin w-5 h-5" /> : 'Confirmar en WhatsApp'}
-                </button>
+          <div className="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#0A0A0A] border border-white/10 p-8 rounded-[2rem] w-full max-w-md relative">
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-zinc-500"><X /></button>
+              <h3 className="text-2xl font-black mb-6">Tus Datos</h3>
+              <form onSubmit={handleCheckout} className="space-y-4">
+                <input required placeholder="Nombre Completo" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-black border border-white/10 p-4 rounded-xl" />
+                <input required type="tel" placeholder="WhatsApp" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className="w-full bg-black border border-white/10 p-4 rounded-xl" />
+                <input required placeholder="Ciudad" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="w-full bg-black border border-white/10 p-4 rounded-xl" />
+                <button type="submit" disabled={isSubmitting} className="w-full bg-[#25D366] py-4 rounded-xl font-black text-white">{isSubmitting ? 'Procesando...' : 'Confirmar en WhatsApp'}</button>
               </form>
             </motion.div>
           </div>
@@ -414,78 +310,52 @@ export default function Home() {
       </AnimatePresence>
 
       {/* ========================================================== */}
-      {/* =================  ÁREA DE CAPTURA DEL TICKET (FIJO)  ================== */}
+      {/* AREA DE CAPTURA (CORREGIDA PARA HTML2CANVAS) */}
       <div className="absolute left-[-9999px] top-0 pointer-events-none">
-        <div 
-          ref={ticketRef} 
-          className="w-[550px] bg-[#050505] p-10 text-white font-sans"
-        >
-          <div className="relative border border-white/10 rounded-[2.5rem] bg-[#0A0A0A] overflow-hidden">
-              
-              {/* Luces de fondo simplificadas */}
-              <div className="absolute top-[-50px] left-[-50px] w-60 h-60 bg-[#8B5CF6] opacity-10 blur-[80px] rounded-full" />
-              <div className="absolute bottom-[-50px] right-[-50px] w-60 h-60 bg-[#3B82F6] opacity-5 blur-[80px] rounded-full" />
-
-              {/* Header */}
-              <div className="bg-gradient-to-r from-[#7c3aed] to-[#2563eb] p-10 text-center relative">
-                 <div className="absolute inset-0 bg-black opacity-20" />
+        <div ref={ticketRef} id="ticket-capture-area" className="w-[500px] bg-[#050505] p-0 font-sans">
+          <div style={{ border: '1px solid #333', borderRadius: '40px', backgroundColor: '#0a0a0a', overflow: 'hidden' }}>
+              {/* Header con colores sólidos (No LAB/OKLCH) */}
+              <div style={{ backgroundColor: '#7c3aed', padding: '40px', textAlign: 'center' }}>
                  <img 
                     src="/logo.png" 
-                    alt="Logo" 
                     crossOrigin="anonymous"
-                    className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-white/20 shadow-2xl mb-4 relative z-10" 
+                    style={{ width: '80px', height: '80px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.2)', marginBottom: '15px' }} 
                  />
-                 <h1 className="text-3xl font-black tracking-tighter relative z-10 text-white">CREATIVE SPACE</h1>
-                 <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-4 py-2 rounded-full mt-3 relative z-10">
-                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white">Pase VIP Oficial</p>
-                 </div>
+                 <h1 style={{ color: '#ffffff', fontSize: '24px', fontWeight: '900', margin: '0' }}>CREATIVE SPACE</h1>
+                 <p style={{ color: '#ffffff', fontSize: '10px', opacity: '0.8', marginTop: '5px', letterSpacing: '2px' }}>PASE VIP OFICIAL</p>
               </div>
               
-              <div className="p-10 space-y-10 relative z-10">
-                 <div className="text-center">
-                    <p className="text-zinc-500 text-[11px] font-black uppercase mb-2 tracking-[0.3em]">Premio Estelar</p>
-                    <h2 className="text-4xl font-black text-white leading-tight">
-                       {activeRaffle?.title || "Sorteo Activo"}
-                    </h2>
+              <div style={{ padding: '40px' }}>
+                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <p style={{ color: '#666', fontSize: '10px', fontWeight: 'bold' }}>PREMIO</p>
+                    <h2 style={{ color: '#fff', fontSize: '32px', fontWeight: '900', margin: '10px 0' }}>{activeRaffle?.title || "SORTEO"}</h2>
                  </div>
 
-                 <div className="h-[1px] w-full bg-zinc-800" />
-
-                 <div className="grid grid-cols-2 gap-8 text-center bg-white/5 p-6 rounded-3xl border border-white/5">
-                    <div>
-                       <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Participante</p>
-                       <p className="text-xl font-extrabold text-white mt-1">{foundTickets[0]?.name || "Cliente VIP"}</p>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', marginBottom: '30px' }}>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                       <p style={{ color: '#666', fontSize: '9px' }}>PARTICIPANTE</p>
+                       <p style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{foundTickets[0]?.name || "CLIENTE"}</p>
                     </div>
-                    <div>
-                       <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Estado</p>
-                       <p className="text-xl font-extrabold text-[#25D366] mt-1 uppercase">Confirmado</p>
+                    <div style={{ textAlign: 'center', flex: 1 }}>
+                       <p style={{ color: '#666', fontSize: '9px' }}>ESTADO</p>
+                       <p style={{ color: '#25D366', fontSize: '16px', fontWeight: 'bold' }}>CONFIRMADO</p>
                     </div>
                  </div>
 
-                 <div className="bg-black border border-white/10 p-10 rounded-[2rem] text-center">
-                    <p className="text-[11px] text-zinc-500 uppercase font-black mb-6 tracking-[0.4em]">Tus Números Estelares</p>
-                    <div className="flex flex-wrap justify-center gap-6">
-                       {foundTickets.length > 0 ? (
-                          foundTickets.map(t => (
-                            <span key={t.number} className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-                               {t.number.toString().padStart(pad, '0')}
-                            </span>
-                          ))
-                       ) : (
-                          <span className="text-xl font-bold text-zinc-700">#000</span>
-                       )}
+                 <div style={{ backgroundColor: '#000', padding: '30px', borderRadius: '25px', textAlign: 'center', border: '1px solid #222' }}>
+                    <p style={{ color: '#444', fontSize: '10px', marginBottom: '15px', fontWeight: 'bold' }}>TUS NÚMEROS</p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '15px' }}>
+                       {foundTickets.map(t => (
+                         <span key={t.number} style={{ color: '#fff', fontSize: '40px', fontWeight: '900' }}>
+                            {t.number.toString().padStart(pad, '0')}
+                         </span>
+                       ))}
                     </div>
                  </div>
 
-                 <div className="flex justify-between items-end pt-4">
-                    <div className="text-left">
-                       <p className="text-sm font-bold text-white">Creative Space</p>
-                       <p className="text-[10px] text-zinc-500">Digital Solutions Agency</p>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600">Verificado Digitalmente</p>
-                    </div>
+                 <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between', opacity: '0.5' }}>
+                    <span style={{ color: '#fff', fontSize: '9px' }}>DIGITAL SOLUTIONS</span>
+                    <span style={{ color: '#fff', fontSize: '9px' }}>CREATIVE SPACE MX</span>
                  </div>
               </div>
           </div>
