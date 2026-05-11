@@ -145,7 +145,7 @@ export default function Home() {
 
       toast.success("¡Boletos apartados!");
       const text = `¡Hola! Aparte boletos para: *${activeRaffle.title}*\n*Números:* ${selectedTickets.join(", ")}\n*Total:* $${selectedTickets.length * activeRaffle.price} MXN\n*Nombre:* ${formData.name}`;
-      window.open(`https://api.whatsapp.com/send?phone=528331234567&text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://api.whatsapp.com/send?phone=528332583222&text=${encodeURIComponent(text)}`, '_blank');
       
       setSelectedTickets([]);
       setIsModalOpen(false);
@@ -348,17 +348,38 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-black tracking-tighter text-white">CREATIVE<span className="text-[#8B5CF6]">SPACE</span></h2>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="#" className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-            </a>
-            <a href="#" className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-            </a>
-            <a href="#" className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all">
-              <MessageCircle className="w-5 h-5" />
-            </a>
-          </div>
+          {/* Centro: Redes Sociales */}
+<div className="flex items-center gap-4">
+  {/* FACEBOOK */}
+  <a 
+    href="https://www.facebook.com/people/Creative-Space/61560473976903/" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all"
+  >
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+  </a>
+
+  {/* INSTAGRAM */}
+  <a 
+    href="https://www.instagram.com/creative_space.mx" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all"
+  >
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+  </a>
+
+  {/* WHATSAPP (Directo al chat) */}
+  <a 
+    href="https://wa.me/528332583222" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center rounded-2xl text-zinc-400 hover:text-white transition-all"
+  >
+    <MessageCircle className="w-5 h-5" />
+  </a>
+</div>
           <div className="text-center md:text-right">
              <p className="text-sm font-bold text-white">CREATIVE SPACE</p>
              <p className="text-xs font-bold text-zinc-500 mt-1">x Digital Solutions</p>
