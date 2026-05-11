@@ -197,7 +197,7 @@ export default function Home() {
           <motion.img 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            src="/logo.png" 
+            src="/logo-nvo.png" 
             alt="Creative Space Logo" 
             className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full object-cover border-4 border-white/10 shadow-[0_0_50px_rgba(139,92,246,0.3)] mb-6"
           />
