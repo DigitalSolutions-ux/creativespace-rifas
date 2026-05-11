@@ -162,17 +162,43 @@ export default function Home() {
   };
 
   const downloadTicket = async () => {
-    if (ticketRef.current) {
-      toast.info("Generando pase VIP estelar...");
-      // Aumentamos pixelRatio a 3 para máxima calidad de descarga
-      const dataUrl = await toPng(ticketRef.current, { pixelRatio: 3, cacheBust: true });
-      const link = document.createElement('a');
-      link.download = `Pase-VIP-${foundTickets[0]?.name.replace(/ /g, "_")}-${activeRaffle?.title.replace(/ /g, "_")}.png`;
-      link.href = dataUrl;
-      link.click();
-      toast.success("¡Pase VIP descargado con éxito!");
-    }
-  };
+  if (!ticketRef.current) return;
+
+  try {
+    toast.info("Generando pase VIP estelar...");
+
+    // Usamos html2canvas para mayor compatibilidad en móviles y Vercel
+    const html2canvas = (await import('html2canvas')).default; // Import dinámico para no pesar al inicio
+    
+    const canvas = await html2canvas(ticketRef.current, {
+      scale: 3,            // Triple resolución para que no se pixelee
+      useCORS: true,       // CRÍTICO: Permite que el logo salga en la foto
+      backgroundColor: null, // Mantiene la transparencia si tu diseño la tiene
+      logging: false,
+    });
+
+    // Generamos la URL de la imagen
+    const dataUrl = canvas.toDataURL("image/png");
+    
+    // Formateo seguro de nombres (evita errores si el objeto es undefined)
+    const userName = foundTickets[0]?.name?.replace(/\s+/g, "_") || "Cliente";
+    const raffleTitle = activeRaffle?.title?.replace(/\s+/g, "_") || "Sorteo";
+
+    const link = document.createElement('a');
+    link.download = `Pase-VIP-${userName}-${raffleTitle}.png`;
+    link.href = dataUrl;
+    
+    // Truco de Ingeniero: Añadir y quitar el link del DOM mejora compatibilidad en iOS/Safari
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("¡Pase VIP descargado con éxito!");
+  } catch (error) {
+    console.error("Error al generar el pase:", error);
+    toast.error("No se pudo generar la imagen. Intenta de nuevo.");
+  }
+};
 
   if (loading) return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="animate-spin text-[#8B5CF6] w-12 h-12" /></div>;
 
