@@ -452,95 +452,118 @@ export default function Home() {
       </AnimatePresence>
 
       {/* ========================================================== */}
-      {/* =================  NUEVO DISEÑO VIP TICKET  ================== */}
-      {/* Seccion Oculta para Descarga */}
-      <div className="absolute left-[-9999px] top-0">
-        <div ref={ticketRef} className="w-[550px] bg-[#050505] p-10 text-white font-sans overflow-hidden">
-          {/* Fondo Holográfico/Frost con bordes Glow */}
-          <div className="relative border border-white/10 rounded-[2.5rem] bg-[#0A0A0A]/60 backdrop-blur-3xl overflow-hidden shadow-[0_0_80px_rgba(139,92,246,0.15)]">
-             
-             {/* Luces de fondo decorativas */}
-             <div className="absolute top-[-50px] left-[-50px] w-40 h-40 bg-[#8B5CF6]/10 blur-[60px] rounded-full" />
-             <div className="absolute bottom-[-50px] right-[-50px] w-40 h-40 bg-[#3B82F6]/05 blur-[60px] rounded-full" />
+{/* =================  NUEVO DISEÑO VIP TICKET CORREGIDO  ================== */}
+<div className="absolute left-[-9999px] top-0">
+  <div 
+    ref={ticketRef} 
+    className="w-[550px] bg-[#050505] p-10 text-white font-sans overflow-hidden"
+    id="ticket-download-area"
+  >
+    {/* Contenedor Principal con Borde Glow */}
+    <div className="relative border border-rgba(255,255,255,0.1) rounded-[2.5rem] bg-[#0A0A0A] overflow-hidden shadow-2xl">
+        
+        {/* Luces de fondo (Simplificadas para evitar errores de renderizado) */}
+        <div className="absolute top-[-50px] left-[-50px] w-60 h-60 bg-[#8B5CF6] opacity-10 blur-[80px] rounded-full" />
+        <div className="absolute bottom-[-50px] right-[-50px] w-60 h-60 bg-[#3B82F6] opacity-5 blur-[80px] rounded-full" />
 
-             {/* Header Holográfico */}
-             <div className="bg-gradient-to-r from-[#8B5CF6] to-[#3B82F6] p-10 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/20" />
-                <img src="/logo.png" alt="Creative Space Logo VIP" className="w-20 h-20 mx-auto rounded-full object-cover border-4 border-white/20 shadow-lg mb-4 relative z-10" />
-                <h1 className="text-3xl font-black tracking-tighter relative z-10 text-white shadow-sm">CREATIVE SPACE</h1>
-                <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-1.5 rounded-full mt-3 relative z-10 border border-white/10">
-                   <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                   <p className="text-[11px] font-bold uppercase tracking-widest text-white">Pase VIP Oficial de Participación</p>
-                </div>
-             </div>
-             
-             {/* Contenido Principal */}
-             <div className="p-10 space-y-10 relative z-10">
-                {/* Premio */}
-                <div className="text-center">
-                   <p className="text-zinc-500 text-[10px] font-bold uppercase mb-1 tracking-widest">Premio Estelar</p>
-                   <h2 className="text-4xl font-black text-white leading-tight tracking-tight drop-shadow-[0_2px_10px_rgba(255,255,255,0.1)]">
-                      {activeRaffle?.title || "Cargando Premio..."}
-                   </h2>
-                </div>
-
-                {/* Separador con Glow */}
-                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent shadow-[0_0_10px_rgba(139,92,246,0.5)]" />
-
-                {/* Datos del Participante */}
-                <div className="grid grid-cols-2 gap-8 text-center">
-                   <div>
-                      <p className="text-[10px] text-zinc-500 uppercase font-medium tracking-widest">Participante</p>
-                      <p className="text-xl font-bold text-white mt-1.5">{foundTickets[0]?.name || "Cliente VIP"}</p>
-                   </div>
-                   <div>
-                      <p className="text-[10px] text-zinc-500 uppercase font-medium tracking-widest">WhatsApp</p>
-                      <p className="text-xl font-bold text-white mt-1.5">
-                         {foundTickets[0]?.phone ? `+52 ${foundTickets[0].phone}` : "No Registrado"}
-                      </p>
-                   </div>
-                </div>
-
-                {/* TUS NÚMEROS ESTELARES */}
-                <div className="bg-black/50 border border-white/05 p-8 rounded-3xl text-center shadow-inner relative overflow-hidden group">
-                   <div className="absolute inset-0 bg-gradient-to-b from-[#8B5CF6]/05 to-transparent opacity-50" />
-                   <p className="text-[11px] text-zinc-400 uppercase font-black mb-6 tracking-[0.2em] relative z-10">Tus Números Estelares</p>
-                   <div className="flex flex-wrap justify-center gap-4 relative z-10">
-                      {foundTickets.length > 0 ? (
-                         foundTickets.map(t => (
-                           <motion.span 
-                              key={t.number} 
-                              initial={{ scale: 0.8, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-zinc-400 drop-shadow-[0_2px_15px_rgba(139,92,246,0.3)] tabular-nums"
-                           >
-                              {t.number.toString().padStart(pad, '0')}
-                           </motion.span>
-                         ))
-                      ) : (
-                         <span className="text-xl font-bold text-zinc-600">No hay números confirmados.</span>
-                      )}
-                   </div>
-                </div>
-
-                {/* Estado y Sello */}
-                <div className="flex justify-between items-center pt-8 border-t border-white/05">
-                   <div>
-                      <p className="text-[10px] text-zinc-500 uppercase font-medium tracking-widest">Estado</p>
-                      <div className="inline-flex items-center gap-1.5 bg-[#25D366]/10 text-[#25D366] px-3 py-1 rounded-full mt-1 border border-[#25D366]/20">
-                         <Star className="w-3 h-3 fill-[#25D366]" />
-                         <span className="text-xs font-bold uppercase tracking-widest">Confirmado</span>
-                      </div>
-                   </div>
-                   <div className="text-right">
-                      <p className="text-[10px] font-black uppercase tracking-tighter text-zinc-600">Firma Digital Solutions</p>
-                      <p className="text-xs font-bold text-zinc-300 mt-1">Creative Space <span className="text-[#8B5CF6]">x Digital Solutions</span></p>
-                   </div>
-                </div>
-             </div>
-          </div>
+        {/* Header con Gradiente Sólido */}
+        <div className="bg-gradient-to-r from-[#7c3aed] to-[#2563eb] p-10 text-center relative overflow-hidden">
+           {/* Overlay para textura */}
+           <div className="absolute inset-0 bg-black opacity-20" />
+           
+           <img 
+              src="/logo.png" 
+              alt="Logo" 
+              crossOrigin="anonymous"
+              className="w-24 h-24 mx-auto rounded-full object-cover border-4 border-rgba(255,255,255,0.2) shadow-2xl mb-4 relative z-10" 
+           />
+           
+           <h1 className="text-3xl font-black tracking-tighter relative z-10 text-white">
+             CREATIVE SPACE
+           </h1>
+           
+           <div className="inline-flex items-center gap-2 bg-rgba(255,255,255,0.1) border border-rgba(255,255,255,0.1) px-4 py-2 rounded-full mt-3 relative z-10">
+              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white">Pase VIP Oficial de Participación</p>
+           </div>
         </div>
-      </div>
+        
+        {/* Contenido Principal */}
+        <div className="p-10 space-y-10 relative z-10">
+           
+           {/* Info del Premio */}
+           <div className="text-center">
+              <p className="text-zinc-500 text-[11px] font-black uppercase mb-2 tracking-[0.3em]">Premio Estelar</p>
+              <h2 className="text-4xl font-black text-white leading-tight tracking-tight">
+                 {activeRaffle?.title || "Cargando Premio..."}
+              </h2>
+           </div>
+
+           {/* Línea Divisora con Estilo */}
+           <div className="flex items-center gap-4">
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+              <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_10px_#8b5cf6]" />
+              <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
+           </div>
+
+           {/* Datos del Participante */}
+           <div className="grid grid-cols-2 gap-8 text-center bg-white/5 p-6 rounded-3xl border border-white/5">
+              <div>
+                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Participante</p>
+                 <p className="text-xl font-extrabold text-white mt-1 break-words">
+                   {foundTickets[0]?.name || "Cliente VIP"}
+                 </p>
+              </div>
+              <div>
+                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">WhatsApp</p>
+                 <p className="text-xl font-extrabold text-white mt-1">
+                    {foundTickets[0]?.phone ? `+52 ${foundTickets[0].phone}` : "Confirmado"}
+                 </p>
+              </div>
+           </div>
+
+           {/* SECCIÓN DE NÚMEROS (Eliminé Framer Motion aquí) */}
+           <div className="bg-[#000000] border border-white/10 p-10 rounded-[2rem] text-center shadow-inner relative overflow-hidden">
+              <p className="text-[11px] text-zinc-500 uppercase font-black mb-6 tracking-[0.4em] relative z-10">Tus Números Estelares</p>
+              
+              <div className="flex flex-wrap justify-center gap-6 relative z-10">
+                 {foundTickets.length > 0 ? (
+                    foundTickets.map(t => (
+                      <span 
+                         key={t.number} 
+                         className="text-6xl font-black text-white drop-shadow-[0_0_15px_rgba(139,92,246,0.5)] tabular-nums"
+                      >
+                         {t.number.toString().padStart(pad, '0')}
+                      </span>
+                    ))
+                 ) : (
+                    <span className="text-xl font-bold text-zinc-700">Validando números...</span>
+                 )}
+              </div>
+           </div>
+
+           {/* Footer del Ticket */}
+           <div className="flex justify-between items-end pt-4">
+              <div className="space-y-2">
+                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Estado del Pase</p>
+                 <div className="inline-flex items-center gap-2 bg-[#25D366]/10 text-[#25D366] px-4 py-1.5 rounded-xl border border-[#25D366]/20">
+                    <div className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
+                    <span className="text-xs font-black uppercase tracking-widest">Confirmado</span>
+                 </div>
+              </div>
+              
+              <div className="text-right">
+                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-1">Verificado por</p>
+                 <p className="text-sm font-bold text-white">
+                    Creative <span className="text-purple-500">Space</span>
+                 </p>
+                 <p className="text-[10px] text-zinc-500 font-medium">Digital Solutions Agency</p>
+              </div>
+           </div>
+        </div>
+    </div>
+  </div>
+</div>
     </div>
   );
 }
